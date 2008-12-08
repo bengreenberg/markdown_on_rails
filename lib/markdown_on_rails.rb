@@ -1,5 +1,16 @@
 require 'bluecloth'
 
+class ActionMailer::Base
+  def render_degrading_markdown(template, vars = {})
+    content_type 'multipart/alternative'
+    body ''
+    part :content_type => 'text/plain',
+      :body => render_message(template, vars)
+    part :content_type => 'text/html',
+      :body => render_message(template, vars)
+  end
+end
+
 class MarkdownOnRails
   
   class BlueCloth < BlueCloth
@@ -42,8 +53,7 @@ class MarkdownOnRails
     @@heading_mapping = mapping
   end
   
-  def render(template, local_assigns) 
-
+  def render(template, local_assigns = {}) 
     assigns = @view.assigns.dup
   
     if content_for_layout = @view.instance_variable_get("@content_for_layout")
@@ -53,20 +63,34 @@ class MarkdownOnRails
 		  assigns.each do |key,val|
 		    instance_variable_set "@#{key}", val
 	    end
-		  local_assigns.each do |key,val|
+		 local_assigns.each do |key,val|
 	  		class << self; self; end.send(:define_method,key) { val }
 			end
-      ERB.new(template, nil, '-').result(binding)
+      ERB.new(template.source).result(binding)
     end
-    
-    doc = BlueCloth::new(result)
-    doc.heading_mapping = @@heading_mapping
-    doc.to_html
+   
+    unless @view.controller.parts.length >= 1 and @view.controller.parts[0].content_type == 'text/plain'
+      result
+    else
+      doc = BlueCloth::new(result)
+      doc.heading_mapping = @@heading_mapping
+      doc.to_html
+    end
   end 
 
+  def self.compilable?
+    false
+  end
+
+  def compilable?
+    self.class.compilable?
+  end 
+  
+
+  # bg - bumping version .4, rails 2.1 support
   module VERSION
     MAJOR = 0
-    MINOR = 3
+    MINOR = 4
     TINY  = 0
     STRING = [MAJOR, MINOR, TINY].join('.')          
   end

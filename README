@@ -1,13 +1,77 @@
 markdown_on_rails
 ==========
 
-Introduction goes here.
+A Ruby on Rails template handler for the (markdown)[http://daringfireball.net/projects/markdown/] format.
+
+Download / Install
+==================
+GitHub: http://github.com/markdown_on_rails 
+
+	script/plugin install git://github.com/bengreenberg/markdown_on_rails.git
+
+The BlueCloth gem is required:
+	sudo gem install BlueCloth
+
+Usage
+=====
+
+It is very straight forward to use:
+
+in your config/environment.rb file:
+
+	require 'markdown_on_rails'
+	ActionView::Base.register_template_handler('mdtext', MarkdownOnRails)
+
+Optionally, add this:
+	MarkdownOnRails::map_headings_down_by 2
+
+The MarkdownOnRails::map_headings_down_by n tells the handler to map headings by n. For example, if you set MarkdownOnRails::map_headings_down_by 2 and write a document like:
+
+	# First Heading
+
+	Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. 
+
+	## Second Heading
+
+	Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. 
 
 
-Example
-=======
+The resulting html will feature <h3> and <h4> for the two headings respectively.
 
-Example goes here.
+If you have MarkdownOnRails::map_headings_down_by 0 (this is the default), no mapping of headings takes place and you would get <h1> and <h2>.
 
+This feature is there so you can always write your documents starting with a first level heading and then if you include the document in two different places that happen to require headings for content to start at something other than a first level heading, you can do so without having to change your content.
 
-Copyright (c) 2008 [name of plugin creator], released under the MIT license
+The only other thing left to do is to create your views as .text files and use markdown syntax.
+
+ERB is available inside the .text files if you are using it as a rails view (as for normal '.rhtml' views). eg:
+
+	# Thank you
+
+	Thanks <%= @username %> for...
+
+Gracefully Degrading Email
+==========================
+
+You can use Markdown to create HTML emails that will gracefully degrade for plain text viewing without maintaining separate versions of the email in HTML and text.
+
+Simply create your email view and Markdown and save it with the .mdtext extension.  In your ActiveMailer model, call the `render_degrading_markdown` method with the name of the view like so:
+
+  def welcome_message(user)
+    recipients user.email
+    subject "Welcome to my awesome site!"
+    from "robot@myawesomesite.com"
+    render_degrading_markdown('welcome_message', :user => user)
+  end
+
+The email will be sent in multipart format, with a rendered HTML part and a plain text part.
+
+Credit
+
+I gladly give credit to John Gruber of daringfireball.net for creating markdown - it has made my professional life much more fun.
+
+I also give credit to Michael Granger for porting John Gruber's code to Ruby in the form of Bluecloth. My code obviously depends heavily (critically) on Bluecloth. Using Bluecloth means the amount of code I had to write is embarrassingly little, and for that embarrassment I give credit to the Ruby language.
+
+Copyright (c) 2006 Keith Rowell (http://www.rubygreenblue.com)
+Copyright (c) 2008 Ben Greenberg (ben at ben[dontspamme]greenberg dot net)
+Released under the MIT license.
